@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: horariounimayor-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "0000"
+      POSTGRES_DB: HorarioUniMayor
+    ports:
+      - "9001:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - unimayor-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: horariounimayor-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://postgres:0000@db:5432/HorarioUniMayor?schema=public"
+      DATABASE_HOST: "db"
+      DATABASE_PORT: 5432
+      DATABASE_USER: "postgres"
+      DATABASE_PASSWORD: "0000"
+      DATABASE_NAME: "HorarioUniMayor"
+      PORT: 3000
+      JWT_SECRET: "firma_secreta_institucional_colegio_mayor_del_cauca_2026"
+      JWT_EXPIRATION: "4h"
+    depends_on:
+      - db
+    networks:
+      - unimayor-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: horariounimayor-frontend
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      NEXT_PUBLIC_API_URL: "http://localhost:3000/api"
+    depends_on:
+      - backend
+    networks:
+      - unimayor-network
+
+volumes:
+  pgdata:
+    driver: local
+
+networks:
+  unimayor-network:
+    driver: bridge

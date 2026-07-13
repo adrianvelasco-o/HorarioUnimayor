@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+/* 
+ * Propósito: Configuración de Variables CSS globales y tokens de Tailwind CSS v4
+ * Caso de uso: UC-1 al UC-34 (Soporte Visual de Interfaces)
+ * Requisitos relacionados: RF1, RF8, RF7
+ * Escenarios QAW: QS-4 (Consistencia y Mantenibilidad del Estilo Visual)
+ * Fecha: 2026-07-11
+ */
+
+:root {
+  /* Paleta Institucional Obligatoria */
+  --azul-principal: rgba(0, 72, 132, 0.9);
+  --azul-secundario: rgb(2, 16, 130);
+  --color-fondo: #f2f2f2;
+  --color-tarjeta: #ffffff;
+  --color-hover: #ffdf56;
+
+  /* Estados y Colores Semánticos */
+  --color-exito: #10b981;
+  --color-advertencia: #f59e0b;
+  --color-error: #ef4444;
+  --color-texto-oscuro: #1f2937;
+  --color-texto-claro: #4b5563;
+}
+
+@theme {
+  --color-azul-principal: var(--azul-principal);
+  --color-azul-secundario: var(--azul-secundario);
+  --color-fondo: var(--color-fondo);
+  --color-tarjeta: var(--color-tarjeta);
+  --color-hover: var(--color-hover);
+  --color-exito: var(--color-exito);
+  --color-advertencia: var(--color-advertencia);
+  --color-error: var(--color-error);
+  
+  /* Tipografía */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background-color: var(--color-fondo);
+  color: var(--color-texto-oscuro);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Enfoque visible accesible (WCAG 2.1 AA) */
+*:focus-visible {
+  outline: 3px solid var(--color-hover) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 4px rgba(2, 16, 130, 0.4) !important;
+}
+
+/* Ocultar enlaces de "Skip to content" a menos que estén enfocados */
+.saltar-contenido {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.saltar-contenido:focus {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  width: auto;
+  height: auto;
+  background-color: var(--azul-secundario);
+  color: #ffffff;
+  padding: 1rem 1.5rem;
+  border-radius: 0.375rem;
+  z-index: 9999;
+  outline: 3px solid var(--color-hover) !important;
+}

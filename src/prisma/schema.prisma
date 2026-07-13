@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Rol {
+  id_rol              Int          @id @default(autoincrement())
+  nombre              String       @unique @db.VarChar(50)
+  descripcion         String?      @db.VarChar(255)
+  activo              Boolean      @default(true)
+  fecha_creacion      DateTime     @default(now())
+  fecha_actualizacion DateTime     @updatedAt
+  usuarios            Usuario[]
+  permisos            RolPermiso[]
+
+  @@map("rol")
+}
+
+model Usuario {
+  id_usuario          Int                @id @default(autoincrement())
+  nombres             String             @db.VarChar(120)
+  apellidos           String             @db.VarChar(100)
+  correo              String             @unique @db.VarChar(150)
+  contrasena          String             @db.VarChar(255)
+  activo              Boolean            @default(true)
+  id_rol              Int
+  fecha_creacion      DateTime           @default(now())
+  fecha_actualizacion DateTime           @updatedAt
+  administrador       Administrador?
+  docente             Docente?
+  rol                 Rol                @relation(fields: [id_rol], references: [id_rol])
+  historiales         HistorialUsuario[]
+
+  @@map("usuario")
+}
+
+model Administrador {
+  id_administrador Int     @id
+  telefono         String? @db.VarChar(20)
+  usuario          Usuario @relation(fields: [id_administrador], references: [id_usuario], onDelete: Cascade)
+
+  @@map("administrador")
+}
+
+model Docente {
+  id_docente              Int       @id
+  identificacion          String    @unique @db.VarChar(50)
+  telefono                String?   @db.VarChar(20)
+  horas_semanales_maximas Int
+  tipo_contrato           String    @db.VarChar(50)
+  especialidad            String?   @db.VarChar(150)
+  disponibilidad          String?   @db.Text
+  usuario                 Usuario   @relation(fields: [id_docente], references: [id_usuario], onDelete: Cascade)
+  horarios                Horario[]
+
+  @@map("docente")
+}
+
+model PeriodoAcademico {
+  id_periodo   Int       @id @default(autoincrement())
+  nombre       String    @unique @db.VarChar(50)
+  fecha_inicio DateTime  @db.Date
+  fecha_fin    DateTime  @db.Date
+  activo       Boolean   @default(true)
+  horarios     Horario[]
+
+  @@map("periodo_academico")
+}
+
+model Salon {
+  id_salon  Int       @id @default(autoincrement())
+  nombre    String    @unique @db.VarChar(100)
+  tipo      String    @db.VarChar(50)
+  capacidad Int
+  ubicacion String?   @db.VarChar(150)
+  horarios  Horario[]
+
+  @@map("salon")
+}
+
+model Labor {
+  id_labor        Int       @id @default(autoincrement())
+  nombre          String    @unique @db.VarChar(150)
+  descripcion     String?   @db.VarChar(255)
+  horas_semanales Int
+  horarios        Horario[]
+
+  @@map("labor")
+}
+
+model Materia {
+  id_materia      Int       @id @default(autoincrement())
+  codigo          String    @unique @db.VarChar(50)
+  nombre          String    @unique @db.VarChar(150)
+  creditos        Int
+  horas_semanales Int
+  horarios        Horario[]
+
+  @@map("materia")
+}
+
+model Horario {
+  id_horario  Int              @id @default(autoincrement())
+  id_periodo  Int
+  id_docente  Int
+  id_salon    Int
+  id_labor    Int?
+  id_materia  Int?
+  dia_semana  String           @db.VarChar(15)
+  hora_inicio String           @db.VarChar(5)
+  hora_fin    String           @db.VarChar(5)
+  docente     Docente          @relation(fields: [id_docente], references: [id_docente])
+  labor       Labor?           @relation(fields: [id_labor], references: [id_labor], onDelete: Restrict)
+  materia     Materia?         @relation(fields: [id_materia], references: [id_materia], onDelete: Restrict)
+  periodo     PeriodoAcademico @relation(fields: [id_periodo], references: [id_periodo])
+  salon       Salon            @relation(fields: [id_salon], references: [id_salon])
+
+  @@map("horario")
+}
+
+model Permiso {
+  id_permiso  Int          @id @default(autoincrement())
+  codigo      String       @unique @db.VarChar(50)
+  nombre      String       @db.VarChar(100)
+  modulo      String       @db.VarChar(50)
+  accion      String       @db.VarChar(50)
+  descripcion String?      @db.VarChar(255)
+  activo      Boolean      @default(true)
+  roles       RolPermiso[]
+
+  @@map("permiso")
+}
+
+model RolPermiso {
+  id_rol     Int
+  id_permiso Int
+  rol        Rol     @relation(fields: [id_rol], references: [id_rol], onDelete: Cascade)
+  permiso    Permiso @relation(fields: [id_permiso], references: [id_permiso], onDelete: Cascade)
+
+  @@id([id_rol, id_permiso])
+  @@map("rol_permiso")
+}
+
+model HistorialUsuario {
+  id_historial Int      @id @default(autoincrement())
+  id_usuario   Int
+  accion       String   @db.VarChar(100)
+  descripcion  String?  @db.VarChar(255)
+  fecha        DateTime @default(now())
+  ip           String?  @db.VarChar(45)
+  usuario      Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade)
+
+  @@map("historial_usuario")
+}
