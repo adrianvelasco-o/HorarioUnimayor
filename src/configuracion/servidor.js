@@ -36,6 +36,14 @@ aplicacionExpress.use((peticion, respuesta, siguiente) => {
     siguiente();
 });
 
+aplicacionExpress.get("/healthz", (peticion, respuesta) => {
+    respuesta.status(200).json({
+        estado: "OK",
+        servicio: "HorarioUniMayor Backend",
+        fecha: new Date().toISOString()
+    });
+});
+
 // Logs de peticiones entrantes
 aplicacionExpress.use((peticion, respuesta, siguiente) => {
     loggerAuditoria.info(`Petición HTTP recibida: ${peticion.method} ${peticion.url}`);
