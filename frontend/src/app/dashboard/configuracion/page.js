@@ -42,8 +42,12 @@ export default function PaginaConfiguracion() {
   });
 
   useEffect(() => {
-    if (!cargando && !usuario) {
-      enrutador.replace("/login");
+    if (!cargando) {
+      if (!usuario) {
+        enrutador.replace("/login");
+      } else if (usuario.rol?.toLowerCase() === "docente") {
+        enrutador.replace("/dashboard");
+      }
     }
   }, [usuario, cargando, enrutador]);
 
@@ -78,7 +82,7 @@ export default function PaginaConfiguracion() {
     }
   };
 
-  if (cargando || !usuario) {
+  if (cargando || !usuario || usuario.rol?.toLowerCase() === "docente") {
     return (
       <div className="min-h-screen flex justify-center items-center bg-fondo">
         <Spinner tamano="lg" color="principal" />

@@ -192,14 +192,16 @@ export default function Sidebar({ sidebarAbierto, setSidebarAbierto }) {
       {/* Footer del Sidebar */}
       <div className="p-4 border-t border-azul-principal flex flex-col gap-2">
         {/* Acciones de Configuración y Salir (Solo en móvil para no duplicar en desktop) */}
-        <Link
-          href="/dashboard/configuracion"
-          onClick={alHacerClicEnlace}
-          className="flex lg:hidden items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold text-white hover:text-hover hover:bg-azul-principal/30 transition-all duration-200"
-        >
-          <FiSettings className="w-5 h-5 flex-shrink-0" />
-          <span>Configuración</span>
-        </Link>
+        {usuario?.rol?.toLowerCase() !== "docente" && (
+          <Link
+            href="/dashboard/configuracion"
+            onClick={alHacerClicEnlace}
+            className="flex lg:hidden items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold text-white hover:text-hover hover:bg-azul-principal/30 transition-all duration-200"
+          >
+            <FiSettings className="w-5 h-5 flex-shrink-0" />
+            <span>Configuración</span>
+          </Link>
+        )}
         <button
           onClick={() => {
             cerrarSesion();
