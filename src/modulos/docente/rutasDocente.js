@@ -34,7 +34,7 @@ rutasDocente.post(
         body("apellidos").notEmpty().withMessage("El apellido es obligatorio."),
         body("correo").isEmail().withMessage("Debe suministrar un correo válido."),
         body("contrasena").isLength({ min: 6 }).withMessage("La contraseña debe tener mínimo 6 caracteres."),
-        body("id_rol").isInt().withMessage("El rol debe ser un entero."),
+        body("id_rol").optional().isInt().withMessage("El rol debe ser un entero."),
         body("identificacion").notEmpty().withMessage("La identificación es obligatoria."),
         body("horas_semanales_maximas").isInt({ min: 1 }).withMessage("Las horas semanales deben ser un entero positivo."),
         body("tipo_contrato").notEmpty().withMessage("El tipo de contrato es obligatorio.")

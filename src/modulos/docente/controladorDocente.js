@@ -53,8 +53,20 @@ class ControladorDocente {
             if (docenteExistente) {
                 return respuesta.status(409).json({
                     exitoso: false,
-                    mensaje: `La identificación '${identificacion}' ya está registrada en otro docente.`
+                    mensaje: "La identificación ya se encuentra registrada (ya está registrada)."
                 });
+            }
+
+            let rolIdFinal = id_rol;
+            if (!rolIdFinal) {
+                const rolDocente = await this.servicioDocente.obtenerRolPorNombre("Docente");
+                if (!rolDocente) {
+                    return respuesta.status(400).json({
+                        exitoso: false,
+                        mensaje: "No se encontró el rol de Docente en la base de datos."
+                    });
+                }
+                rolIdFinal = rolDocente.id_rol;
             }
 
             // 2. Usar Factory Method para validar y construir el objeto de negocio
@@ -63,7 +75,7 @@ class ControladorDocente {
                 apellidos,
                 correo,
                 contrasena,
-                id_rol
+                id_rol: rolIdFinal
             });
 
             // 3. Persistir atómicamente en PostgreSQL mediante transacción
@@ -72,7 +84,7 @@ class ControladorDocente {
                 apellidos: usuarioConstruido.apellidos,
                 correo: usuarioConstruido.correo,
                 contrasena: usuarioConstruido.contrasena,
-                id_rol: usuarioConstruido.id_rol,
+                id_rol: rolIdFinal,
                 identificacion,
                 telefono,
                 horas_semanales_maximas,
@@ -98,10 +110,33 @@ class ControladorDocente {
             });
 
         } catch (errorExcepcion) {
-            loggerAuditoria.error(`Error en crearDocente: ${errorExcepcion.message}`);
+            // Registrar el error completo únicamente en el servidor mediante el logger
+            loggerAuditoria.error(`Error inesperado en crearDocente: ${errorExcepcion.stack || errorExcepcion.message}`);
+
+            // Caso 1: Si Prisma devuelve una violación de clave única sobre el correo
+            if (
+                errorExcepcion.code === 'P2002' && 
+                errorExcepcion.meta && 
+                (Array.isArray(errorExcepcion.meta.target) ? errorExcepcion.meta.target.includes('correo') : typeof errorExcepcion.meta.target === 'string' && errorExcepcion.meta.target.includes('correo'))
+            ) {
+                return respuesta.status(409).json({
+                    exitoso: false,
+                    mensaje: "El correo institucional ya está registrado para otro usuario. Si la persona ya existe en el sistema, modifique sus datos desde Gestión de Usuarios."
+                });
+            }
+
+            // Fallback para comprobar mensaje de Prisma si el código P2002 no está presente pero refiere al correo único
+            if (errorExcepcion.message && errorExcepcion.message.includes("correo") && (errorExcepcion.message.includes("Unique constraint failed") || errorExcepcion.message.includes("Clave única"))) {
+                return respuesta.status(409).json({
+                    exitoso: false,
+                    mensaje: "El correo institucional ya está registrado para otro usuario. Si la persona ya existe en el sistema, modifique sus datos desde Gestión de Usuarios."
+                });
+            }
+
+            // Caso 3: Para cualquier otro error inesperado
             return respuesta.status(400).json({
                 exitoso: false,
-                mensaje: errorExcepcion.message
+                mensaje: "Ocurrió un error al registrar el docente. Intente nuevamente o contacte al administrador."
             });
         }
     }

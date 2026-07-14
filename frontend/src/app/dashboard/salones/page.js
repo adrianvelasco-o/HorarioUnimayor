@@ -146,13 +146,15 @@ export default function PaginaSalones() {
           titulo="Gestión de Salones y Ambientes"
           subtitulo="Programe y audite los salones físicos de la sede de Popayán"
           acciones={
-            <Boton
-              variante="principal"
-              alHacerClic={abrirModalCrear}
-              icono={FiPlus}
-            >
-              Registrar Salón
-            </Boton>
+            tienePermiso("SALONES_CREAR") ? (
+              <Boton
+                variante="principal"
+                alHacerClic={abrirModalCrear}
+                icono={FiPlus}
+              >
+                Registrar Salón
+              </Boton>
+            ) : undefined
           }
         >
           <Tabla
@@ -162,17 +164,19 @@ export default function PaginaSalones() {
             error={errorCargar}
             buscarPorPropiedad="nombre"
             placeholderBusqueda="Buscar por salón (ej. Aula 301)..."
-            acciones={(salon) => (
-              <Boton
-                variante="peligro"
-                alHacerClic={() => abrirModalEliminar(salon)}
-                icono={FiTrash2}
-                className="p-2"
-                aria-label={`Eliminar salón ${salon.nombre}`}
-              >
-                Eliminar
-              </Boton>
-            )}
+            acciones={
+              tienePermiso("SALONES_ELIMINAR") ? (salon) => (
+                <Boton
+                  variante="peligro"
+                  alHacerClic={() => abrirModalEliminar(salon)}
+                  icono={FiTrash2}
+                  className="p-2"
+                  aria-label={`Eliminar salón ${salon.nombre}`}
+                >
+                  Eliminar
+                </Boton>
+              ) : undefined
+            }
           />
         </Card>
 

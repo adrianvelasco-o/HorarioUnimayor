@@ -75,7 +75,7 @@ export default function PaginaDashboard() {
           const todosHorarios = await servicioHorario.obtenerPorPeriodo(activo.id_periodo);
           
           // Filtrar horarios propios del docente
-          const miHorario = todosHorarios.filter(h => h.id_docente === usuario.idUsuario);
+          const miHorario = todosHorarios.filter(h => h.docente?.usuario?.correo?.toLowerCase() === usuario?.correo?.toLowerCase());
           setDocenteHorarios(miHorario);
 
           // Extraer asignaturas únicas

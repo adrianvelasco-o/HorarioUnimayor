@@ -150,13 +150,15 @@ export default function PaginaPeriodos() {
           titulo="Gestión de Periodos Académicos"
           subtitulo="Programe y audite los periodos de clases institucionales"
           acciones={
-            <Boton
-              variante="principal"
-              alHacerClic={abrirModalCrear}
-              icono={FiPlus}
-            >
-              Registrar Periodo
-            </Boton>
+            tienePermiso("PERIODOS_CREAR") ? (
+              <Boton
+                variante="principal"
+                alHacerClic={abrirModalCrear}
+                icono={FiPlus}
+              >
+                Registrar Periodo
+              </Boton>
+            ) : undefined
           }
         >
           <Tabla
@@ -166,17 +168,19 @@ export default function PaginaPeriodos() {
             error={errorCargar}
             buscarPorPropiedad="nombre"
             placeholderBusqueda="Buscar por nombre (ej. 2026-1)..."
-            acciones={(periodo) => (
-              <Boton
-                variante="peligro"
-                alHacerClic={() => abrirModalEliminar(periodo)}
-                icono={FiTrash2}
-                className="p-2"
-                aria-label={`Eliminar periodo ${periodo.nombre}`}
-              >
-                Eliminar
-              </Boton>
-            )}
+            acciones={
+              tienePermiso("PERIODOS_ELIMINAR") ? (periodo) => (
+                <Boton
+                  variante="peligro"
+                  alHacerClic={() => abrirModalEliminar(periodo)}
+                  icono={FiTrash2}
+                  className="p-2"
+                  aria-label={`Eliminar periodo ${periodo.nombre}`}
+                >
+                  Eliminar
+                </Boton>
+              ) : undefined
+            }
           />
         </Card>
 

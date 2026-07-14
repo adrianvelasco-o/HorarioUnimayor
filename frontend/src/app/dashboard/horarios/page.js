@@ -34,6 +34,7 @@ import PermissionGate from "../../../components/compartidos/PermissionGate";
 export default function PaginaHorarios() {
   const { usuario, cargando: cargandoSesion, tienePermiso } = useAutenticacion();
   const enrutador = useRouter();
+  const esDocente = tienePermiso("MI_HORARIO_VER") && !tienePermiso("HORARIOS_CREAR");
 
   const [periodos, setPeriodos] = useState([]);
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState("");
@@ -105,11 +106,14 @@ export default function PaginaHorarios() {
       const listaPeriodos = await servicioPeriodo.obtenerTodos();
       setPeriodos(listaPeriodos);
       if (listaPeriodos.length > 0) {
-        setPeriodoSeleccionado(String(listaPeriodos[0].id_periodo));
+        const activo = listaPeriodos.find(p => p.activo) || listaPeriodos[0];
+        setPeriodoSeleccionado(String(activo.id_periodo));
       }
 
-      const listaDocentes = await servicioDocente.obtenerTodos();
-      setDocentes(listaDocentes.map(d => ({ valor: d.id_docente, texto: `${d.usuario.nombres} ${d.usuario.apellidos}` })));
+      if (!esDocente) {
+        const listaDocentes = await servicioDocente.obtenerTodos();
+        setDocentes(listaDocentes.map(d => ({ valor: d.id_docente, texto: `${d.usuario.nombres} ${d.usuario.apellidos}` })));
+      }
 
       const listaSalones = await servicioSalon.obtenerTodos();
       setSalones(listaSalones.map(s => ({ valor: s.id_salon, texto: `${s.nombre} (${s.tipo})` })));
@@ -150,13 +154,17 @@ export default function PaginaHorarios() {
   // Filtrado local dinámico y cruzado
   const horariosFiltrados = useMemo(() => {
     return horarios.filter(h => {
-      if (filtroDocente && String(h.id_docente) !== filtroDocente) return false;
+      if (esDocente) {
+        if (h.docente?.usuario?.correo?.toLowerCase() !== usuario?.correo?.toLowerCase()) return false;
+      } else {
+        if (filtroDocente && String(h.id_docente) !== filtroDocente) return false;
+      }
       if (filtroMateria && String(h.id_materia) !== filtroMateria) return false;
       if (filtroSalon && String(h.id_salon) !== filtroSalon) return false;
       if (filtroTipoSalon && h.salon?.tipo !== filtroTipoSalon) return false;
       return true;
     });
-  }, [horarios, filtroDocente, filtroMateria, filtroSalon, filtroTipoSalon]);
+  }, [horarios, esDocente, usuario, filtroDocente, filtroMateria, filtroSalon, filtroTipoSalon]);
 
   const limpiarFiltros = () => {
     setFiltroDocente("");
@@ -303,14 +311,16 @@ export default function PaginaHorarios() {
           <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm flex flex-col gap-4 select-none text-left">
             <h4 className="text-xs font-black text-gray-500 uppercase tracking-wider">Filtros de Búsqueda</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              <Select
-                label="Docente"
-                nombre="filtroDocente"
-                opciones={docentes}
-                placeholder="Todos los Docentes"
-                value={filtroDocente}
-                onChange={(e) => setFiltroDocente(e.target.value)}
-              />
+              {!esDocente && (
+                <Select
+                  label="Docente"
+                  nombre="filtroDocente"
+                  opciones={docentes}
+                  placeholder="Todos los Docentes"
+                  value={filtroDocente}
+                  onChange={(e) => setFiltroDocente(e.target.value)}
+                />
+              )}
 
               <Select
                 label="Materia"

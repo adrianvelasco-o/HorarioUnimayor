@@ -249,6 +249,98 @@ export default function PaginaUsuariosAdmin() {
     }
   };
 
+  const columnasTabla = React.useMemo(() => {
+    const cols = [
+      { cabecera: "Nombre Completo", selector: (u) => `${u.nombres} ${u.apellidos}` },
+      { cabecera: "Correo Electrónico", selector: (u) => u.correo },
+      {
+        cabecera: "Rol",
+        render: (u) => (
+          <span className="px-2.5 py-1 bg-gray-100 border border-gray-200 text-xs font-semibold rounded text-gray-700">
+            {u.rol?.nombre || "Sin Rol"}
+          </span>
+        )
+      },
+      {
+        cabecera: "Estado",
+        render: (u) => (
+          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+            u.activo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+          }`}>
+            {u.activo ? "Activo" : "Bloqueado"}
+          </span>
+        )
+      }
+    ];
+
+    const tienePermisosAccion =
+      tienePermiso("USUARIOS_EDITAR") ||
+      tienePermiso("USUARIOS_ACTIVAR") ||
+      tienePermiso("USUARIOS_HISTORIAL") ||
+      tienePermiso("USUARIOS_ELIMINAR");
+
+    if (tienePermisosAccion) {
+      cols.push({
+        cabecera: "Acciones",
+        render: (u) => (
+          <div className="flex items-center gap-2 select-none">
+            {tienePermiso("USUARIOS_EDITAR") && (
+              <button
+                onClick={() => abrirModalEditar(u)}
+                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded border border-transparent hover:border-blue-200 transition-colors"
+                title="Editar usuario"
+              >
+                <FiEdit2 className="w-4 h-4" />
+              </button>
+            )}
+            {tienePermiso("USUARIOS_EDITAR") && (
+              <button
+                onClick={() => abrirModalClave(u)}
+                className="p-1.5 text-purple-600 hover:bg-purple-50 rounded border border-transparent hover:border-purple-200 transition-colors"
+                title="Restablecer contraseña"
+              >
+                <FiLock className="w-4 h-4" />
+              </button>
+            )}
+            {tienePermiso("USUARIOS_ACTIVAR") && (
+              <button
+                onClick={() => alternarBloqueo(u)}
+                className={`p-1.5 rounded border border-transparent transition-colors ${
+                  u.activo
+                    ? "text-orange-600 hover:bg-orange-50 hover:border-orange-200"
+                    : "text-green-600 hover:bg-green-50 hover:border-green-200"
+                }`}
+                title={u.activo ? "Desactivar/Bloquear usuario" : "Activar usuario"}
+              >
+                {u.activo ? <FiUserMinus className="w-4 h-4" /> : <FiUserCheck className="w-4 h-4" />}
+              </button>
+            )}
+            {tienePermiso("USUARIOS_HISTORIAL") && (
+              <button
+                onClick={() => abrirModalHistorial(u)}
+                className="p-1.5 text-gray-600 hover:bg-gray-100 rounded border border-transparent hover:border-gray-200 transition-colors"
+                title="Ver logs de auditoría"
+              >
+                <FiActivity className="w-4 h-4" />
+              </button>
+            )}
+            {tienePermiso("USUARIOS_ELIMINAR") && (
+              <button
+                onClick={() => abrirModalEliminar(u)}
+                className="p-1.5 text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition-colors"
+                title="Eliminar usuario"
+              >
+                <FiUserMinus className="w-4 h-4 text-red-600" />
+              </button>
+            )}
+          </div>
+        )
+      });
+    }
+
+    return cols;
+  }, [tienePermiso, usuarios, abrirModalEditar, abrirModalClave, alternarBloqueo, abrirModalHistorial, abrirModalEliminar]);
+
   if (cargandoSesion || !usuarioSesion || !tienePermiso("USUARIOS_VER") || cargando) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-fondo">
@@ -272,75 +364,6 @@ export default function PaginaUsuariosAdmin() {
 
     return coincideBusqueda && coincideRol && coincideEstado;
   });
-
-  const columnasTabla = [
-    { cabecera: "Nombre Completo", selector: (u) => `${u.nombres} ${u.apellidos}` },
-    { cabecera: "Correo Electrónico", selector: (u) => u.correo },
-    {
-      cabecera: "Rol",
-      render: (u) => (
-        <span className="px-2.5 py-1 bg-gray-100 border border-gray-200 text-xs font-semibold rounded text-gray-700">
-          {u.rol?.nombre || "Sin Rol"}
-        </span>
-      )
-    },
-    {
-      cabecera: "Estado",
-      render: (u) => (
-        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-          u.activo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-        }`}>
-          {u.activo ? "Activo" : "Bloqueado"}
-        </span>
-      )
-    },
-    {
-      cabecera: "Acciones",
-      render: (u) => (
-        <div className="flex items-center gap-2 select-none">
-          <button
-            onClick={() => abrirModalEditar(u)}
-            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded border border-transparent hover:border-blue-200 transition-colors"
-            title="Editar usuario"
-          >
-            <FiEdit2 className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => abrirModalClave(u)}
-            className="p-1.5 text-purple-600 hover:bg-purple-50 rounded border border-transparent hover:border-purple-200 transition-colors"
-            title="Restablecer contraseña"
-          >
-            <FiLock className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => alternarBloqueo(u)}
-            className={`p-1.5 rounded border border-transparent transition-colors ${
-              u.activo
-                ? "text-orange-600 hover:bg-orange-50 hover:border-orange-200"
-                : "text-green-600 hover:bg-green-50 hover:border-green-200"
-            }`}
-            title={u.activo ? "Desactivar/Bloquear usuario" : "Activar usuario"}
-          >
-            {u.activo ? <FiUserMinus className="w-4 h-4" /> : <FiUserCheck className="w-4 h-4" />}
-          </button>
-          <button
-            onClick={() => abrirModalHistorial(u)}
-            className="p-1.5 text-gray-600 hover:bg-gray-100 rounded border border-transparent hover:border-gray-200 transition-colors"
-            title="Ver logs de auditoría"
-          >
-            <FiActivity className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => abrirModalEliminar(u)}
-            className="p-1.5 text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition-colors"
-            title="Eliminar usuario"
-          >
-            <FiUserMinus className="w-4 h-4 text-red-600" />
-          </button>
-        </div>
-      )
-    }
-  ];
 
   return (
     <LayoutPrincipal>

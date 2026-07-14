@@ -10,6 +10,8 @@ import Modal from "../../../components/ui/Modal";
 import InputText from "../../../components/ui/InputText";
 import Alerta from "../../../components/ui/Alerta";
 import servicioMateria from "../../../services/servicioMateria";
+import servicioPeriodo from "../../../services/servicioPeriodo";
+import servicioHorario from "../../../services/servicioHorario";
 import toast, { Toaster } from "react-hot-toast";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { useRouter } from "next/navigation";
@@ -26,6 +28,7 @@ import Spinner from "../../../components/ui/Spinner";
 export default function PaginaMaterias() {
   const { usuario, cargando: cargandoSesion, tienePermiso } = useAutenticacion();
   const enrutador = useRouter();
+  const esDocente = tienePermiso("MI_HORARIO_VER") && !tienePermiso("HORARIOS_CREAR");
 
   const [materias, setMaterias] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -53,8 +56,28 @@ export default function PaginaMaterias() {
   const cargarMaterias = async () => {
     try {
       setErrorCargar("");
-      const datos = await servicioMateria.obtenerTodos();
-      setMaterias(datos);
+      if (esDocente) {
+        // Obtener todos los periodos y luego los horarios de cada uno
+        const periodos = await servicioPeriodo.obtenerTodos();
+        const promesasHorarios = periodos.map(p => servicioHorario.obtenerPorPeriodo(p.id_periodo));
+        const resultadosHorarios = await Promise.all(promesasHorarios);
+        const todosHorarios = resultadosHorarios.flat();
+        
+        // Filtrar horarios por el correo del docente autenticado
+        const miHorario = todosHorarios.filter(h => h.docente?.usuario?.correo?.toLowerCase() === usuario?.correo?.toLowerCase());
+        
+        // Extraer materias únicas asignadas
+        const materiasUnicas = {};
+        miHorario.forEach(h => {
+          if (h.materia) {
+            materiasUnicas[h.materia.id_materia] = h.materia;
+          }
+        });
+        setMaterias(Object.values(materiasUnicas));
+      } else {
+        const datos = await servicioMateria.obtenerTodos();
+        setMaterias(datos);
+      }
     } catch (err) {
       setErrorCargar("Error al contactar con la API de materias.");
       toast.error("Error al cargar las materias y asignaturas.");
@@ -147,13 +170,15 @@ export default function PaginaMaterias() {
           titulo="Gestión de Asignaturas y Materias"
           subtitulo="Programe y audite el catálogo oficial de materias académicas"
           acciones={
-            <Boton
-              variante="principal"
-              alHacerClic={abrirModalCrear}
-              icono={FiPlus}
-            >
-              Registrar Materia
-            </Boton>
+            tienePermiso("MATERIAS_CREAR") ? (
+              <Boton
+                variante="principal"
+                alHacerClic={abrirModalCrear}
+                icono={FiPlus}
+              >
+                Registrar Materia
+              </Boton>
+            ) : undefined
           }
         >
           <Tabla
@@ -163,17 +188,19 @@ export default function PaginaMaterias() {
             error={errorCargar}
             buscarPorPropiedad="nombre"
             placeholderBusqueda="Buscar por asignatura (ej. Arquitectura)..."
-            acciones={(materia) => (
-              <Boton
-                variante="peligro"
-                alHacerClic={() => abrirModalEliminar(materia)}
-                icono={FiTrash2}
-                className="p-2"
-                aria-label={`Eliminar materia ${materia.nombre}`}
-              >
-                Eliminar
-              </Boton>
-            )}
+            acciones={
+              tienePermiso("MATERIAS_ELIMINAR") ? (materia) => (
+                <Boton
+                  variante="peligro"
+                  alHacerClic={() => abrirModalEliminar(materia)}
+                  icono={FiTrash2}
+                  className="p-2"
+                  aria-label={`Eliminar materia ${materia.nombre}`}
+                >
+                  Eliminar
+                </Boton>
+              ) : undefined
+            }
           />
         </Card>
 

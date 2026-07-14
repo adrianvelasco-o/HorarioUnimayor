@@ -143,16 +143,18 @@ export default function PaginaPermisos() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Boton
-              tipo="principal"
-              alHacerClic={guardarMatriz}
-              cargando={guardando}
-              deshabilitado={!rolSeleccionado || cargandoPermisosRol}
-            >
-              <FiSave className="w-4 h-4 mr-2" /> Guardar Cambios
-            </Boton>
-          </div>
+          {tienePermiso("PERMISOS_ASIGNAR") && (
+            <div className="flex items-center gap-3">
+              <Boton
+                tipo="principal"
+                alHacerClic={guardarMatriz}
+                cargando={guardando}
+                deshabilitado={!rolSeleccionado || cargandoPermisosRol}
+              >
+                <FiSave className="w-4 h-4 mr-2" /> Guardar Cambios
+              </Boton>
+            </div>
+          )}
         </div>
 
         {error && <Alerta tipo="error" mensaje={error} />}
@@ -201,31 +203,36 @@ export default function PaginaPermisos() {
                       className="shadow-sm border border-gray-200"
                     >
                       {/* Controladores de Selección Rápida */}
-                      <div className="flex justify-end gap-3 mb-4 select-none">
-                        <button
-                          type="button"
-                          onClick={() => alternarGrupoPermisos(moduloPermisos, true)}
-                          className="flex items-center gap-1 text-xs font-bold text-azul-principal hover:underline"
-                        >
-                          <FiCheckSquare className="w-3.5 h-3.5" /> Seleccionar Todo
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => alternarGrupoPermisos(moduloPermisos, false)}
-                          className="flex items-center gap-1 text-xs font-bold text-gray-500 hover:underline"
-                        >
-                          <FiSquare className="w-3.5 h-3.5" /> Limpiar Todo
-                        </button>
-                      </div>
+                      {tienePermiso("PERMISOS_ASIGNAR") && (
+                        <div className="flex justify-end gap-3 mb-4 select-none">
+                          <button
+                            type="button"
+                            onClick={() => alternarGrupoPermisos(moduloPermisos, true)}
+                            className="flex items-center gap-1 text-xs font-bold text-azul-principal hover:underline"
+                          >
+                            <FiCheckSquare className="w-3.5 h-3.5" /> Seleccionar Todo
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => alternarGrupoPermisos(moduloPermisos, false)}
+                            className="flex items-center gap-1 text-xs font-bold text-gray-500 hover:underline"
+                          >
+                            <FiSquare className="w-3.5 h-3.5" /> Limpiar Todo
+                          </button>
+                        </div>
+                      )}
 
                       {/* Cuadrícula de checkboxes */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {moduloPermisos.map(perm => {
                           const activo = permisosRol.includes(perm.id_permiso);
+                          const esEditable = tienePermiso("PERMISOS_ASIGNAR");
                           return (
                             <label
                               key={perm.id_permiso}
-                              className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-all duration-200 select-none ${
+                              className={`flex items-start gap-3 p-3 border rounded-lg transition-all duration-200 select-none ${
+                                esEditable ? "cursor-pointer" : "cursor-not-allowed opacity-80"
+                              } ${
                                 activo
                                   ? "bg-azul-principal/5 border-azul-principal/30 shadow-sm"
                                   : "bg-white border-gray-200 hover:bg-gray-50/50"
@@ -234,7 +241,8 @@ export default function PaginaPermisos() {
                               <input
                                 type="checkbox"
                                 checked={activo}
-                                onChange={() => alternarPermiso(perm.id_permiso)}
+                                onChange={() => esEditable && alternarPermiso(perm.id_permiso)}
+                                disabled={!esEditable}
                                 aria-describedby="permiso-ayuda"
                                 className="w-4 h-4 text-azul-principal border-gray-300 rounded focus:ring-azul-principal mt-0.5"
                               />

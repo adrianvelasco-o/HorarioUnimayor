@@ -143,13 +143,15 @@ export default function PaginaLabores() {
           titulo="Gestión de Labores Académicas"
           subtitulo="Programe y audite las labores de investigación, extensión y administración"
           acciones={
-            <Boton
-              variante="principal"
-              alHacerClic={abrirModalCrear}
-              icono={FiPlus}
-            >
-              Registrar Labor
-            </Boton>
+            tienePermiso("LABORES_CREAR") ? (
+              <Boton
+                variante="principal"
+                alHacerClic={abrirModalCrear}
+                icono={FiPlus}
+              >
+                Registrar Labor
+              </Boton>
+            ) : undefined
           }
         >
           <Tabla
@@ -159,17 +161,19 @@ export default function PaginaLabores() {
             error={errorCargar}
             buscarPorPropiedad="nombre"
             placeholderBusqueda="Buscar por labor (ej. Investigación)..."
-            acciones={(labor) => (
-              <Boton
-                variante="peligro"
-                alHacerClic={() => abrirModalEliminar(labor)}
-                icono={FiTrash2}
-                className="p-2"
-                aria-label={`Eliminar labor ${labor.nombre}`}
-              >
-                Eliminar
-              </Boton>
-            )}
+            acciones={
+              tienePermiso("LABORES_ELIMINAR") ? (labor) => (
+                <Boton
+                  variante="peligro"
+                  alHacerClic={() => abrirModalEliminar(labor)}
+                  icono={FiTrash2}
+                  className="p-2"
+                  aria-label={`Eliminar labor ${labor.nombre}`}
+                >
+                  Eliminar
+                </Boton>
+              ) : undefined
+            }
           />
         </Card>
 

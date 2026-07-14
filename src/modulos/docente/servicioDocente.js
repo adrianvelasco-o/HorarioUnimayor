@@ -45,6 +45,19 @@ class ServicioDocente {
     }
 
     /**
+     * Objetivo: Buscar un rol por su nombre único.
+     * Parámetros:
+     *   - nombre: {String} Nombre del rol.
+     */
+    async obtenerRolPorNombre(nombre) {
+        return await clientePrisma.rol.findUnique({
+            where: {
+                nombre: nombre
+            }
+        });
+    }
+
+    /**
      * Objetivo: Listar todos los docentes de la institución.
      */
     async listarTodos() {
@@ -63,19 +76,50 @@ class ServicioDocente {
     async crearDocente(datosDocente) {
         // Ejecutar transacción atómica para asegurar la consistencia (QS-4)
         return await clientePrisma.$transaction(async (transaccionPrisma) => {
-            const usuarioCreado = await transaccionPrisma.usuario.create({
-                data: {
-                    nombres: datosDocente.nombres,
-                    apellidos: datosDocente.apellidos,
-                    correo: datosDocente.correo,
-                    contrasena: datosDocente.contrasena,
-                    id_rol: datosDocente.id_rol
-                }
+            // Buscar si el usuario ya existe por correo
+            let usuario = await transaccionPrisma.usuario.findUnique({
+                where: { correo: datosDocente.correo.trim().toLowerCase() }
             });
+
+            if (!usuario) {
+                // Si no existe, crear el usuario
+                usuario = await transaccionPrisma.usuario.create({
+                    data: {
+                        nombres: datosDocente.nombres,
+                        apellidos: datosDocente.apellidos,
+                        correo: datosDocente.correo,
+                        contrasena: datosDocente.contrasena,
+                        id_rol: datosDocente.id_rol
+                    }
+                });
+            } else {
+                // Si existe, verificar si ya tiene un perfil docente
+                const docenteExistente = await transaccionPrisma.docente.findUnique({
+                    where: { id_docente: usuario.id_usuario }
+                });
+                
+                if (docenteExistente) {
+                    // Lanzar un error específico de Prisma para que sea capturado como clave única duplicada en el controlador
+                    const error = new Error("El correo electrónico ya se encuentra registrado.");
+                    error.code = "P2002";
+                    error.meta = { target: ["correo"] };
+                    throw error;
+                }
+
+                // Si no tiene perfil de docente, actualizamos nombres, apellidos y rol
+                usuario = await transaccionPrisma.usuario.update({
+                    where: { id_usuario: usuario.id_usuario },
+                    data: {
+                        nombres: datosDocente.nombres,
+                        apellidos: datosDocente.apellidos,
+                        id_rol: datosDocente.id_rol
+                    }
+                });
+            }
 
             const docenteCreado = await transaccionPrisma.docente.create({
                 data: {
-                    id_docente: usuarioCreado.id_usuario,
+                    id_docente: usuario.id_usuario,
                     identificacion: datosDocente.identificacion.trim(),
                     telefono: datosDocente.telefono,
                     horas_semanales_maximas: datosDocente.horas_semanales_maximas,

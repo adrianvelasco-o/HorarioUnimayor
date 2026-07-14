@@ -163,6 +163,69 @@ export default function PaginaRolesAdmin() {
     }
   };
 
+  const columnasTabla = React.useMemo(() => {
+    const cols = [
+      { cabecera: "ID", selector: (r) => r.id_rol },
+      { cabecera: "Nombre del Rol", selector: (r) => r.nombre },
+      { cabecera: "Descripción", selector: (r) => r.descripcion || "N/A" },
+      {
+        cabecera: "Estado",
+        render: (r) => (
+          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+            r.activo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+          }`}>
+            {r.activo ? "Activo" : "Inactivo"}
+          </span>
+        )
+      }
+    ];
+
+    const tienePermisosAccion = tienePermiso("ROLES_EDITAR") || tienePermiso("ROLES_ELIMINAR");
+
+    if (tienePermisosAccion) {
+      cols.push({
+        cabecera: "Acciones",
+        render: (r) => (
+          <div className="flex items-center gap-2 select-none">
+            {tienePermiso("ROLES_EDITAR") && (
+              <button
+                onClick={() => abrirModalEditar(r)}
+                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded border border-transparent hover:border-blue-200 transition-colors"
+                title="Editar rol"
+              >
+                <FiEdit2 className="w-4 h-4" />
+              </button>
+            )}
+            {tienePermiso("ROLES_EDITAR") && (
+              <button
+                onClick={() => alternarEstadoRol(r)}
+                className={`p-1.5 rounded border border-transparent transition-colors ${
+                  r.activo
+                    ? "text-orange-600 hover:bg-orange-50 hover:border-orange-200"
+                    : "text-green-600 hover:bg-green-50 hover:border-green-200"
+                }`}
+                title={r.activo ? "Desactivar rol" : "Activar rol"}
+              >
+                <FiPower className="w-4 h-4" />
+              </button>
+            )}
+            {tienePermiso("ROLES_ELIMINAR") && (
+              <button
+                onClick={() => abrirModalEliminar(r)}
+                className="p-1.5 text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition-colors"
+                title="Eliminar rol"
+              >
+                <FiTrash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        )
+      });
+    }
+
+    return cols;
+  }, [tienePermiso, roles, abrirModalEditar, alternarEstadoRol, abrirModalEliminar]);
+
   if (cargandoSesion || !usuario || !tienePermiso("ROLES_VER") || cargando) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-fondo">
@@ -170,54 +233,6 @@ export default function PaginaRolesAdmin() {
       </div>
     );
   }
-
-  const columnasTabla = [
-    { cabecera: "ID", selector: (r) => r.id_rol },
-    { cabecera: "Nombre del Rol", selector: (r) => r.nombre },
-    { cabecera: "Descripción", selector: (r) => r.descripcion || "N/A" },
-    {
-      cabecera: "Estado",
-      render: (r) => (
-        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-          r.activo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-        }`}>
-          {r.activo ? "Activo" : "Inactivo"}
-        </span>
-      )
-    },
-    {
-      cabecera: "Acciones",
-      render: (r) => (
-        <div className="flex items-center gap-2 select-none">
-          <button
-            onClick={() => abrirModalEditar(r)}
-            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded border border-transparent hover:border-blue-200 transition-colors"
-            title="Editar rol"
-          >
-            <FiEdit2 className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => alternarEstadoRol(r)}
-            className={`p-1.5 rounded border border-transparent transition-colors ${
-              r.activo
-                ? "text-orange-600 hover:bg-orange-50 hover:border-orange-200"
-                : "text-green-600 hover:bg-green-50 hover:border-green-200"
-            }`}
-            title={r.activo ? "Desactivar rol" : "Activar rol"}
-          >
-            <FiPower className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => abrirModalEliminar(r)}
-            className="p-1.5 text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition-colors"
-            title="Eliminar rol"
-          >
-            <FiTrash2 className="w-4 h-4" />
-          </button>
-        </div>
-      )
-    }
-  ];
 
   return (
     <LayoutPrincipal>
@@ -233,9 +248,11 @@ export default function PaginaRolesAdmin() {
             </p>
           </div>
 
-          <Boton tipo="principal" alHacerClic={abrirModalCrear}>
-            <FiPlus className="w-4 h-4 mr-2" /> Crear Nuevo Rol
-          </Boton>
+          {tienePermiso("ROLES_CREAR") && (
+            <Boton tipo="principal" alHacerClic={abrirModalCrear}>
+              <FiPlus className="w-4 h-4 mr-2" /> Crear Nuevo Rol
+            </Boton>
+          )}
         </div>
 
         {errorCargar && <Alerta tipo="error" mensaje={errorCargar} />}
